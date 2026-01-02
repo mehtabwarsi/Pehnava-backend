@@ -16,24 +16,27 @@ app.use(express.urlencoded({ extended: true, limit: '16kb' }))
 app.use(express.static("public"))
 app.use(cookieParser())
 
-// -------------------- ROUTES IMPORT ---------------------
+/* ==========================================================================
+   Routes Import
+   ========================================================================== */
 import { errorHandler } from './middleware/error.middleware.js'
 import userRoutes from './routes/user.routes.js'
+import adminRoutes from './routes/admin.routes.js'
 
 
-
+/* ==========================================================================
+                                       User Routes
+   ========================================================================== */
 app.use('/api/v1/user', userRoutes)
 
+/* ==========================================================================
+                                       Admin Routes
+   ========================================================================== */
+app.use('/api/v1/admin', adminRoutes)
 
 
-
-
-
-
-
-
-
-
-// ------------------END ROUTES------------------
+/* ==========================================================================
+                                       Error Handling
+   ========================================================================== */
 app.use(errorHandler)
 export { app }
