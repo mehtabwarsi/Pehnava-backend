@@ -1,9 +1,8 @@
 import jwt from "jsonwebtoken";
 import { ApiError } from "../utils/ApiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 
 export const adminAuth = (roles = []) => {
-    return asyncHandler(async (req, res, next) => {
+    return (req, res, next) => {
         const authHeader = req.headers.authorization;
 
         if (!authHeader?.startsWith("Bearer")) {
@@ -16,13 +15,13 @@ export const adminAuth = (roles = []) => {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             if (roles.length && !roles.includes(decoded.role)) {
-                throw new ApiError(403, "Access denied");
+                throw new ApiError(403, "Forbidden");
             }
 
             req.admin = decoded;
             next();
         } catch {
-            throw new ApiError(401, "Invalid or expired token");
+            throw new ApiError(401, "Invalid token");
         }
-    });
-}
+    };
+};

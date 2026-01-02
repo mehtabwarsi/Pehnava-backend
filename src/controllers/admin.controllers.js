@@ -34,6 +34,31 @@ const createSuperAdmin = asyncHandler(async (req, res) => {
     );
 });
 
+const createAdmin = asyncHandler(async (req, res) => {
+    const { name, email, password } = req.body;
+
+    const exists = await Admin.findOne({ email });
+
+    if (exists) {
+        throw new ApiError(400, "Admin already exists");
+    }
+
+    const admin = await Admin.create({
+        name,
+        email,
+        password,
+        role: "admin",
+    });
+
+    return res.status(201).json(
+        new ApiResponse(201, "Admin created successfully", {
+            id: admin._id,
+            email: admin.email,
+            role: admin.role,
+        })
+    );
+});
+
 const adminLogin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
@@ -70,5 +95,6 @@ const adminLogin = asyncHandler(async (req, res) => {
 export {
     createSuperAdmin,
     adminLogin,
+    createAdmin,
 };
 
