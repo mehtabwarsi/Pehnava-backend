@@ -295,6 +295,16 @@ const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 
+const getAllCategories = asyncHandler(async (req, res) => {
+    const categories = await Category.find({ isActive: true })
+        .select("_id name");
+
+    return res.status(200).json(
+        new ApiResponse(200, categories, "Categories fetched successfully")
+    );
+})
+
+
 export {
     createProduct,
     getAllProduct,
@@ -304,5 +314,6 @@ export {
     updateVariantStock,
     addVariant,
     updateProductImages,
-    removeProductImage
+    removeProductImage,
+    getAllCategories
 }

@@ -22,6 +22,7 @@ import { errorHandler } from './middleware/error.middleware.js'
 import userRoutes from './routes/user.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import productRoutes from './routes/product.routes.js'
+import categoryRoutes from './routes/category.routes.js'
 
 // user routes
 app.use('/api/v1/user', userRoutes)
@@ -31,6 +32,10 @@ app.use('/api/v1/admin', adminRoutes)
 
 // product routes
 app.use('/api/v1/product', productRoutes)
+
+// category routes
+app.use('/api/v1/category', categoryRoutes)
+
 
 
 
