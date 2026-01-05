@@ -32,7 +32,13 @@ const productSchema = new mongoose.Schema(
             type: Number,
         },
         category: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Category",
+            required: true,
+        },
+        subCategory: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "SubCategory",
             required: true,
         },
 
@@ -60,11 +66,6 @@ const productSchema = new mongoose.Schema(
             enum: ["active", "inactive"],
             default: "active",
         },
-        gender: {
-            type: String,
-            enum: ["men", "women", "unisex"],
-            required: true,
-        },
 
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
@@ -72,6 +73,11 @@ const productSchema = new mongoose.Schema(
         },
     },
     { timestamps: true }
-);
+
+)
+
+productSchema.index({ categoryId: 1 });
+productSchema.index({ subCategoryId: 1 });
+productSchema.index({ name: "text" });
 
 export const Product = mongoose.model("Product", productSchema);

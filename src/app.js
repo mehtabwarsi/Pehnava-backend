@@ -16,34 +16,25 @@ app.use(express.urlencoded({ extended: true, limit: '16kb' }))
 app.use(express.static("public"))
 app.use(cookieParser())
 
-/* ==========================================================================
-   Routes Import
-   ========================================================================== */
+
+// Routes
 import { errorHandler } from './middleware/error.middleware.js'
 import userRoutes from './routes/user.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import productRoutes from './routes/product.routes.js'
 
-
-/* ==========================================================================
-                                       User Routes
-   ========================================================================== */
+// user routes
 app.use('/api/v1/user', userRoutes)
 
-/* ==========================================================================
-                                       Admin Routes
-   ========================================================================== */
+// admin routes
 app.use('/api/v1/admin', adminRoutes)
 
-
-
-/* ==========================================================================
-                                       Product Routes
-   ========================================================================== */
+// product routes
 app.use('/api/v1/product', productRoutes)
-app.use('/api/v1/product/get-all-products', productRoutes)
-/* ==========================================================================
-                                       Error Handling
-   ========================================================================== */
+
+
+
+
+
 app.use(errorHandler)
 export { app }

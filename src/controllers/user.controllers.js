@@ -44,6 +44,13 @@ const getUserProfile = asyncHandler(async (req, res) => {
     );
 });
 
-export { login, getUserProfile };
+const getTotalUsers = asyncHandler(async (req, res) => {
+    const totalUsers = await User.countDocuments();
+    return res.status(200).json(
+        new ApiResponse(200, totalUsers, "Total users fetched successfully")
+    );
+});
+
+export { login, getUserProfile, getTotalUsers };
 
 

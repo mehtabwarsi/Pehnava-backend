@@ -14,15 +14,15 @@ const createProduct = asyncHandler(async (req, res) => {
         category,
         images,
         sizes,
+        subCategory,
         colors,
         stock,
         isFeatured,
-        gender,
         material,
 
     } = req.body;
 
-    if (!name || !price || !images?.length || !gender || !category || !material) {
+    if (!name || !price || !images?.length || !category || !material || !subCategory) {
         throw new ApiError(400, "Required fields missing");
     }
 
@@ -39,8 +39,8 @@ const createProduct = asyncHandler(async (req, res) => {
         description,
         price,
         discountPrice,
-        gender,
         category,
+        subCategory,
         images,
         sizes,
         colors,
@@ -56,7 +56,9 @@ const createProduct = asyncHandler(async (req, res) => {
 });
 
 const getAllProduct = asyncHandler(async (req, res) => {
-    const products = await Product.find();
+    const products = await Product.find({ status: "active" })
+        .populate("category", "name")
+        .populate("subCategory", "name")
     return res.status(200).json(
         new ApiResponse(200, "Products fetched successfully", products)
     );

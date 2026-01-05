@@ -80,15 +80,15 @@ const adminLogin = asyncHandler(async (req, res) => {
     const token = await admin.generateToken();
 
     return res.status(200).json(
-        new ApiResponse(200, "Admin logged in successfully", {
+        new ApiResponse(200, {
             token,
             admin: {
                 id: admin._id,
                 name: admin.name,
                 email: admin.email,
                 role: admin.role,
-            },
-        })
+            }
+        }, "Admin logged in successfully")
     );
 });
 
