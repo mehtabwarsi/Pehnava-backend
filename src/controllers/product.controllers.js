@@ -83,7 +83,7 @@ const getAllProduct = asyncHandler(async (req, res) => {
         .populate("category", "name")
         .populate("subCategory", "name")
     return res.status(200).json(
-        new ApiResponse(200, "Products fetched successfully", products)
+        new ApiResponse(200, products, "Products fetched successfully")
     );
 });
 
@@ -105,7 +105,7 @@ const getProductById = asyncHandler(async (req, res) => {
     }
 
     return res.status(200).json(
-        new ApiResponse(200, "Product fetched successfully", product)
+        new ApiResponse(200, product, "Product fetched successfully")
     );
 });
 
