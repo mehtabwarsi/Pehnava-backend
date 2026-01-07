@@ -6,6 +6,8 @@ import { Product } from "../models/product.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { Category } from "../models/category.model.js";
+import { SubCategory } from "../models/subCategory.model.js";
 
 const createProduct = asyncHandler(async (req, res) => {
     const {
@@ -329,6 +331,55 @@ const getAllCategories = asyncHandler(async (req, res) => {
     );
 })
 
+const getProductsByCategoryAndSubCategory = asyncHandler(async (req, res) => {
+    const { category, subCategory } = req.query;
+
+    const query = {};
+
+    // 👨‍🦱 / 👩‍🦱 Category (men / women)
+    if (category) {
+        const categoryDoc = await Category.findOne({
+            name: category.toLowerCase(),
+            isActive: true
+        });
+
+        if (!categoryDoc) {
+            return res.status(200).json(
+                new ApiResponse(200, [], "No products found")
+            );
+        }
+
+        query.category = categoryDoc._id;
+    }
+
+    // 👕 SubCategory (shirt / tshirt / jeans / pant)
+    if (subCategory) {
+        const subCategoryDoc = await SubCategory.findOne({
+            name: new RegExp(`^${subCategory}$`, "i"),
+        });
+
+        if (!subCategoryDoc) {
+            return res.status(200).json(
+                new ApiResponse(200, [], "No products found")
+            );
+        }
+
+        query.subCategory = subCategoryDoc._id;
+    }
+
+    // ✅ Only active products for user side
+    query.status = "active";
+
+    const products = await Product.find(query)
+        .populate("category", "name")
+        .populate("subCategory", "name")
+        .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, products, "Products fetched successfully")
+    );
+});
+
 
 export {
     createProduct,
@@ -340,5 +391,6 @@ export {
     addVariant,
     updateProductImages,
     removeProductImage,
-    getAllCategories
+    getAllCategories,
+    getProductsByCategoryAndSubCategory
 }
