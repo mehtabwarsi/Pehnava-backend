@@ -82,8 +82,6 @@ const createProduct = asyncHandler(async (req, res) => {
     );
 });
 
-
-
 const getAllProduct = asyncHandler(async (req, res) => {
     const products = await Product.find()
         .populate("category", "name")
@@ -103,7 +101,7 @@ const getAllProduct = asyncHandler(async (req, res) => {
     });
 
     return res.status(200).json(
-        new ApiResponse(200, productsWithStock, "Products fetched successfully")
+        new ApiResponse(200, productsWithStock.reverse(), "Products fetched successfully")
     );
 });
 
@@ -332,7 +330,7 @@ const getAllCategories = asyncHandler(async (req, res) => {
 })
 
 const getProductsByCategoryAndSubCategory = asyncHandler(async (req, res) => {
-    const { category, subCategory } = req.query;
+    const { category, subCategory, sortByPrice, isFeatured } = req.query;
 
     const query = {};
 
@@ -367,13 +365,26 @@ const getProductsByCategoryAndSubCategory = asyncHandler(async (req, res) => {
         query.subCategory = subCategoryDoc._id;
     }
 
+    // ⭐ Featured filter
+    if (isFeatured === "true") {
+        query.isFeatured = true;
+    }
+
     // ✅ Only active products for user side
     query.status = "active";
+
+    // 💰 Sort by price
+    let sortOptions = { createdAt: -1 }; // default sort
+    if (sortByPrice === "low-to-high") {
+        sortOptions = { price: 1 };
+    } else if (sortByPrice === "high-to-low") {
+        sortOptions = { price: -1 };
+    }
 
     const products = await Product.find(query)
         .populate("category", "name")
         .populate("subCategory", "name")
-        .sort({ createdAt: -1 });
+        .sort(sortOptions);
 
     return res.status(200).json(
         new ApiResponse(200, products, "Products fetched successfully")
