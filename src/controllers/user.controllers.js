@@ -51,6 +51,102 @@ const getTotalUsers = asyncHandler(async (req, res) => {
     );
 });
 
-export { login, getUserProfile, getTotalUsers };
+const toggleWishlist = asyncHandler(async (req, res) => {
+    const { productId } = req.body;
+
+    if (!productId) {
+        throw new ApiError(400, "Product ID is required");
+    }
+
+    const firebaseUser = req.firebaseUser;
+
+    const user = await User.findOne({
+        firebaseUid: firebaseUser.uid,
+    });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const alreadyAdded = user.wishList.includes(productId);
+
+    if (alreadyAdded) {
+        user.wishList.pull(productId); // ❌ remove
+    } else {
+        user.wishList.push(productId); // ❤️ add
+    }
+
+    await user.save();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { action: alreadyAdded ? "removed" : "added" },
+            alreadyAdded
+                ? "Removed from wishlist"
+                : "Added to wishlist"
+        )
+    );
+});
+
+
+const getWishlist = asyncHandler(async (req, res) => {
+    const firebaseUser = req.firebaseUser;
+
+    const user = await User.findOne({
+        firebaseUid: firebaseUser.uid,
+    }).populate("wishList");
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            user.wishList,
+            "Wishlist fetched successfully"
+        )
+    );
+});
+
+const removeFromWishlist = asyncHandler(async (req, res) => {
+    const { productId } = req.params;
+
+    if (!productId) {
+        throw new ApiError(400, "Product ID is required");
+    }
+
+    const firebaseUser = req.firebaseUser;
+
+    const user = await User.findOne({
+        firebaseUid: firebaseUser.uid,
+    });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const alreadyExists = user.wishList.includes(productId);
+
+    if (!alreadyExists) {
+        throw new ApiError(400, "Product not found in wishlist");
+    }
+
+    user.wishList.pull(productId); // 🔥 remove
+
+    await user.save();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { productId },
+            "Product removed from wishlist successfully"
+        )
+    );
+});
+
+
+export { login, getUserProfile, getTotalUsers, toggleWishlist, getWishlist, removeFromWishlist };
 
 

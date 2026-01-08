@@ -26,6 +26,12 @@ const userSchema = new mongoose.Schema(
         provider: {
             type: String, // google | phone
         },
+        wishList: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Product",
+            }
+        ]
     },
     { timestamps: true }
 );
