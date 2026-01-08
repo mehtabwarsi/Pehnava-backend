@@ -10,6 +10,8 @@ export const errorHandler = (err, req, res, next) => {
         message = "Invalid ID format";
     }
 
+    console.error("ERROR HANDLER CAUGHT:", err);
+
     return res.status(statusCode).json({
         success: false,
         message,

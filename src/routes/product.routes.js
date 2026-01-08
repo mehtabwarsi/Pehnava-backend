@@ -19,7 +19,7 @@ const router = Router();
 router.route("/create").post(adminAuth(["admin", "super_admin"]), upload.array("images", 5), createProduct);
 router.route("/get-all-products").get(getAllProduct);
 router.route("/:id").get(getProductById);
-router.route("/:id").patch(adminAuth(["admin", "super_admin"]), updateProduct);
+router.route("/:id").patch(adminAuth(["admin", "super_admin"]), upload.array("images", 5), updateProduct);
 router.route("/:id").delete(adminAuth(["admin", "super_admin"]), deleteProduct);
 router.route("/:id/update-variant-stock").patch(adminAuth(["admin", "super_admin"]), updateVariantStock);
 router.route("/:id/add-variant").post(adminAuth(["admin", "super_admin"]), addVariant);

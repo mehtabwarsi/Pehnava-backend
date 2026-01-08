@@ -8,9 +8,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 const createProduct = asyncHandler(async (req, res) => {
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
-
     const {
         name,
         description,
@@ -19,21 +16,20 @@ const createProduct = asyncHandler(async (req, res) => {
         category,
         subCategory,
         material,
-        isFeatured
+        isFeatured,
+        features,
+        specifications
     } = req.body;
 
-    // images check
     if (!req.files || req.files.length === 0) {
         throw new ApiError(400, "Images are required");
     }
 
-    // variants parse
     if (!req.body.variants) {
         throw new ApiError(400, "Variants are required");
     }
 
     const variants = JSON.parse(req.body.variants);
-
     if (!variants.length) {
         throw new ApiError(400, "At least one variant is required");
     }
@@ -42,7 +38,12 @@ const createProduct = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Required fields missing");
     }
 
-    // upload images
+    let parsedFeatures = [];
+    if (features) parsedFeatures = JSON.parse(features);
+
+    let parsedSpecifications = {};
+    if (specifications) parsedSpecifications = JSON.parse(specifications);
+
     const imageUrls = [];
     for (let file of req.files) {
         const url = await uploadToCloudinary(file.path);
@@ -68,6 +69,8 @@ const createProduct = asyncHandler(async (req, res) => {
         material,
         images: imageUrls,
         variants,
+        features: parsedFeatures,
+        specifications: parsedSpecifications,
         isFeatured,
         createdBy: req.admin.id
     });
@@ -78,14 +81,30 @@ const createProduct = asyncHandler(async (req, res) => {
 });
 
 
+
 const getAllProduct = asyncHandler(async (req, res) => {
-    const products = await Product.find({ status: "active" })
+    const products = await Product.find()
         .populate("category", "name")
         .populate("subCategory", "name")
+        .lean();
+
+    const productsWithStock = products.map((product) => {
+        const totalStock = product.variants?.reduce(
+            (sum, v) => sum + (v.stock || 0),
+            0
+        );
+
+        return {
+            ...product,
+            totalStock,
+        };
+    });
+
     return res.status(200).json(
-        new ApiResponse(200, products, "Products fetched successfully")
+        new ApiResponse(200, productsWithStock, "Products fetched successfully")
     );
 });
+
 
 const getProductById = asyncHandler(async (req, res) => {
     const { id } = req.params;
@@ -136,8 +155,18 @@ const updateProduct = asyncHandler(async (req, res) => {
         subCategory,
         material,
         isFeatured,
-        status
+        status,
+        variants,
     } = req.body;
+
+    if (variants) {
+        const parsedVariants = JSON.parse(variants).map(v => ({
+            size: v.size.toLowerCase(),
+            color: v.color.toLowerCase(),
+            stock: Number(v.stock)
+        }));
+        product.variants = parsedVariants;
+    }
 
     // 4️⃣ update fields safely
     if (name) {
@@ -268,10 +297,6 @@ const removeProductImage = asyncHandler(async (req, res) => {
         new ApiResponse(200, product, "Image removed successfully")
     );
 });
-
-
-
-
 
 const deleteProduct = asyncHandler(async (req, res) => {
     const { id } = req.params;

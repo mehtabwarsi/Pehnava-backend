@@ -73,6 +73,17 @@ const productSchema = new mongoose.Schema(
         ],
 
         variants: { type: [variantSchema], default: [] },
+        features: {
+            type: [String],
+            default: [],
+            required: true
+        },
+        specifications: {
+            type: Map,
+            of: String,
+            default: {},
+            required: true
+        },
         isFeatured: {
             type: Boolean,
             default: false,
@@ -98,11 +109,10 @@ productSchema.index({ subCategory: 1 });
 productSchema.index({ name: "text" });
 
 
-productSchema.pre("save", function (next) {
-    const variants = this.variants || [];
-
+productSchema.pre("save", function () {
     const set = new Set();
-    for (let v of variants) {
+
+    for (let v of this.variants) {
         const key = `${v.size}-${v.color}`;
         if (set.has(key)) {
             throw new Error("Duplicate size + color variant not allowed");
@@ -110,6 +120,7 @@ productSchema.pre("save", function (next) {
         set.add(key);
     }
 });
+
 
 
 export const Product = mongoose.model("Product", productSchema);
