@@ -23,6 +23,7 @@ import userRoutes from './routes/user.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import productRoutes from './routes/product.routes.js'
 import categoryRoutes from './routes/category.routes.js'
+import addressRoutes from './routes/address.routes.js'
 
 // user routes
 app.use('/api/v1/user', userRoutes)
@@ -35,6 +36,10 @@ app.use('/api/v1/product', productRoutes)
 
 // category routes
 app.use('/api/v1/category', categoryRoutes)
+
+// address routes
+app.use('/api/v1/address', addressRoutes)
+
 
 
 
