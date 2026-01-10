@@ -13,8 +13,13 @@ const router = Router();
 
 router.post("/add-to-cart", authMiddleware, addToCart);
 router.get("/get-cart", authMiddleware, getCart);
+
+// 🔥 variant-aware
 router.put("/update-cart-quantity", authMiddleware, updateCartQuantity);
-router.delete("/remove-from-cart/:productId", authMiddleware, removeFromCart);
+
+// 🔥 variant-aware (NO productId param)
+router.post("/remove-from-cart", authMiddleware, removeFromCart);
+
 // call after the order is placed
 router.delete("/clear-cart", authMiddleware, clearCart);
 

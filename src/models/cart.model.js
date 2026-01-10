@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const cartSchema = new mongoose.Schema(
     {
         user: {
@@ -17,12 +18,29 @@ const cartSchema = new mongoose.Schema(
                 },
 
                 variant: {
+                    size: {
+                        type: String,
+                        required: true,
+                    },
                     color: {
                         type: String,
                         required: true,
                     },
-                    size: {
-                        type: String,
+
+                    // 🔥 ORIGINAL PRICE (MRP)
+                    price: {
+                        type: Number,
+                        required: true,
+                    },
+
+                    // 🔥 DISCOUNTED / FINAL PRICE
+                    discountPrice: {
+                        type: Number,
+                        required: true,
+                    },
+
+                    stock: {
+                        type: Number,
                         required: true,
                     },
                 },
@@ -39,4 +57,3 @@ const cartSchema = new mongoose.Schema(
 );
 
 export const Cart = mongoose.model("Cart", cartSchema);
-
