@@ -88,10 +88,6 @@ const addToCart = asyncHandler(async (req, res) => {
     );
 });
 
-
-
-
-
 const getCart = asyncHandler(async (req, res) => {
     const firebaseUser = req.firebaseUser;
 
@@ -139,10 +135,6 @@ const getCart = asyncHandler(async (req, res) => {
         }, "Cart fetched")
     );
 });
-
-
-
-
 
 const updateCartQuantity = asyncHandler(async (req, res) => {
     const { productId, size, color, quantity } = req.body;
@@ -211,8 +203,6 @@ const removeFromCart = asyncHandler(async (req, res) => {
     );
 });
 
-
-
 const clearCart = asyncHandler(async (req, res) => {
     const firebaseUser = req.firebaseUser;
 
@@ -226,10 +216,6 @@ const clearCart = asyncHandler(async (req, res) => {
         new ApiResponse(200, [], "Cart cleared successfully")
     );
 });
-
-
-
-
 
 
 export {

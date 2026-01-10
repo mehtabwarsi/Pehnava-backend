@@ -25,6 +25,7 @@ import productRoutes from './routes/product.routes.js'
 import categoryRoutes from './routes/category.routes.js'
 import addressRoutes from './routes/address.routes.js'
 import cartRoutes from './routes/cart.routes.js'
+import checkoutRoutes from './routes/checkout.routes.js'
 
 // user routes
 app.use('/api/v1/user', userRoutes)
@@ -43,6 +44,10 @@ app.use('/api/v1/address', addressRoutes)
 
 // cart routes
 app.use('/api/v1/cart', cartRoutes)
+
+// checkout routes
+app.use('/api/v1/checkout', checkoutRoutes)
+
 
 
 
