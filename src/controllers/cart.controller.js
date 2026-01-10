@@ -99,7 +99,7 @@ const getCart = asyncHandler(async (req, res) => {
     if (!user) throw new ApiError(404, "User not found");
 
     const cart = await getUserCart(user._id);
-    await cart.populate("items.product", "name images");
+    await cart.populate("items.product", "name images variants");
 
     if (cart.items.length === 0) {
         return res.json(
@@ -111,19 +111,35 @@ const getCart = asyncHandler(async (req, res) => {
         );
     }
 
-    const totalAmount = cart.items.reduce(
+    const itemsWithLiveStock = cart.items.map((item) => {
+        // 🔍 find live variant from product
+        const liveVariant = item.product.variants.find(
+            (v) =>
+                v.size === item.variant.size &&
+                v.color === item.variant.color
+        );
+
+        return {
+            ...item.toObject(),
+            liveStock: liveVariant ? liveVariant.stock : 0,
+            isOutOfStock: !liveVariant || liveVariant.stock === 0,
+        };
+    });
+
+    const totalAmount = itemsWithLiveStock.reduce(
         (sum, i) => sum + i.variant.discountPrice * i.quantity,
         0
     );
 
     return res.status(200).json(
         new ApiResponse(200, {
-            items: cart.items,
-            totalItems: cart.items.length,
+            items: itemsWithLiveStock,
+            totalItems: itemsWithLiveStock.length,
             totalAmount,
         }, "Cart fetched")
     );
 });
+
 
 
 
@@ -169,8 +185,6 @@ const updateCartQuantity = asyncHandler(async (req, res) => {
         new ApiResponse(200, cart, "Cart updated")
     );
 });
-
-
 
 const removeFromCart = asyncHandler(async (req, res) => {
     const { productId, size, color } = req.body;
