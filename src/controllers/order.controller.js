@@ -77,27 +77,44 @@ const getOrderById = asyncHandler(async (req, res) => {
     );
 });
 
-const cancelOrder = asyncHandler(async (req, res) => {
-    const { orderId } = req.params;
+const cancelOrderByUser = asyncHandler(async (req, res) => {
+    const firebaseUser = req.firebaseUser;
+    const { reason } = req.body;
 
-    const order = await Order.findById(orderId);
+    if (!reason) {
+        throw new ApiError(400, "Cancel reason is required");
+    }
 
+    const order = await Order.findById(req.params.orderId);
     if (!order) {
         throw new ApiError(404, "Order not found");
     }
 
+    const user = await User.findOne({ firebaseUid: firebaseUser.uid });
+    if (!order.user.equals(user._id)) {
+        throw new ApiError(403, "Unauthorized");
+    }
+
+    if (order.orderStatus === "cancelled") {
+        throw new ApiError(400, "Order already cancelled");
+    }
+
     if (["shipped", "delivered"].includes(order.orderStatus)) {
-        throw new ApiError(400, "Order cannot be cancelled");
+        throw new ApiError(400, "Order cannot be cancelled now");
     }
 
     order.orderStatus = "cancelled";
+    order.cancelReason = reason;
+    order.cancelledBy = "user";
     order.cancelledAt = new Date();
+
     await order.save();
 
     return res.status(200).json(
-        new ApiResponse(200, "Order cancelled", order)
+        new ApiResponse(200, order, "Order cancelled successfully")
     );
 });
+
 
 
 
@@ -105,5 +122,5 @@ export {
     createOrder,
     getMyOrders,
     getOrderById,
-    cancelOrder,
+    cancelOrderByUser,
 }

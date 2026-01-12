@@ -98,14 +98,21 @@ const orderSchema = new mongoose.Schema(
             type: String, // Razorpay / Stripe ID
         },
 
-        // 🚚 Order Status
         orderStatus: {
             type: String,
             enum: ["placed", "confirmed", "shipped", "delivered", "cancelled"],
             default: "placed",
         },
 
-        // ❌ Cancellation
+        cancelReason: {
+            type: String,
+        },
+
+        cancelledBy: {
+            type: String,
+            enum: ["user", "admin"],
+        },
+
         cancelledAt: {
             type: Date,
             default: null,
