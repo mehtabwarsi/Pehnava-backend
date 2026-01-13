@@ -27,6 +27,14 @@ const orderItemSchema = new mongoose.Schema(
             required: true,
             min: 1,
         },
+
+        size: {
+            type: String, // relevant for clothes
+        },
+
+        color: {
+            type: String, // relevant for clothes
+        }
     },
     { _id: false }
 );

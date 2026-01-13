@@ -3,6 +3,7 @@ import { User } from "../../models/user.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
+import { Product } from "../../models/product.model.js";
 
 
 
@@ -19,7 +20,8 @@ const getAllOrders = asyncHandler(async (req, res) => {
 
 const getOrderById = asyncHandler(async (req, res) => {
     const order = await Order.findById(req.params.id)
-        .populate("user", "name email");
+        .populate("user", "name email")
+        .populate("items.product", "name images");
 
     if (!order) {
         throw new ApiError(404, "Order not found");
@@ -52,9 +54,27 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 
     order.orderStatus = status;
 
+    if (status === "cancelled") {
+        order.cancelledBy = "admin";
+        order.cancelledAt = new Date();
+
+        // Restore stock
+        for (const item of order.items) {
+            const product = await Product.findById(item.product);
+            if (product && product.variants) {
+                const variant = product.variants.find(
+                    (v) => v.size === item.size && v.color === item.color
+                );
+                if (variant) {
+                    variant.stock += item.quantity;
+                    await product.save();
+                }
+            }
+        }
+    }
 
     // 🚫 Cancelled orders locked
-    if (order.orderStatus === "cancelled") {
+    if (order.orderStatus === "cancelled" && status !== "cancelled") {
         throw new ApiError(400, "Cancelled orders cannot be updated");
     }
 

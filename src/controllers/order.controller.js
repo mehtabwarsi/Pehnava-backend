@@ -3,6 +3,7 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { Product } from "../models/product.model.js";
 
 const createOrder = asyncHandler(async (req, res) => {
     const firebaseUser = req.firebaseUser;
@@ -23,16 +24,83 @@ const createOrder = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found");
     }
 
-    const subtotal = items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-    );
+    // validate stock and calculate subtotal
+    let subtotal = 0;
+    const processItems = [];
+
+    // We need to fetch product details and check stock for EACH item
+    // It's better to do this in a loop or Promise.all
+    // For now, let's just stick to a loop to ensure we can throw errors easily
+
+    // We also need to SAVE the product updates (stock deduction)
+    // To ensure atomicity, ideally we use transactions, but for now we will just check and save.
+
+    // Optimization: fetch all product IDs at once? 
+    // To keep logic simple and robust for variants, let's process item by item or use bulkWrite eventually.
+    // Given the scale, loop is okay for now.
+
+    for (const item of items) {
+        const product = await Product.findById(item.product);
+        if (!product) {
+            throw new ApiError(404, `Product not found: ${item.name}`);
+        }
+
+        // Check if variant exists
+        let variantFound = false;
+        if (product.variants && product.variants.length > 0) {
+            // Find specific variant
+            const variantIndex = product.variants.findIndex(
+                (v) => v.size === item.size && v.color === item.color
+            );
+
+            if (variantIndex === -1) {
+                throw new ApiError(400, `Variant not available for ${product.name}: ${item.size} / ${item.color}`);
+            }
+
+            const variant = product.variants[variantIndex];
+            if (variant.stock < item.quantity) {
+                throw new ApiError(400, `Insufficient stock for ${product.name} (${item.size}, ${item.color}). Available: ${variant.stock}`);
+            }
+
+            // Deduct stock in memory
+            product.variants[variantIndex].stock -= item.quantity;
+            variantFound = true;
+        } else {
+            // If product has no variants, maybe we should track main stock?
+            // Based on schema, stock is INSIDE variants.
+            // If a product has 0 variants, it effectively has 0 stock unless we have a top-level stock field.
+            // The schema shows `variants: [variantSchema]`. 
+            // If product has no variants, we can't deduct stock unless we assume it's infinite or handled differently.
+            // Assuming strict variant inventory for now.
+            if (product.variants.length === 0) {
+                // Fallback or Error? 
+                // Let's assume for now valid products MUST have variants as per current usage context
+                // or just skip stock check if no variants (but that's risky).
+                // Let's throw error for safety if no variants exist but we are trying to buy.
+                // Actually, if a product is created without variants, it might be a simple product.
+                // BUT schema enforces variants for stock.
+                // Let's assume we REQUIRE variants for stock management.
+                throw new ApiError(400, `Product ${product.name} has no available variants`);
+            }
+        }
+
+        // Save the product with new stock
+        await product.save();
+
+        subtotal += item.price * item.quantity;
+        processItems.push({
+            ...item,
+            // ensure we save what was actually processed
+            size: item.size,
+            color: item.color
+        });
+    }
 
     const totalAmount = subtotal + shippingCharge - discount;
 
     const order = await Order.create({
         user: user._id,
-        items,
+        items: processItems, // use processed items to be sure
         shippingAddress,
         subtotal,
         shippingCharge,
@@ -109,6 +177,20 @@ const cancelOrderByUser = asyncHandler(async (req, res) => {
     order.cancelledAt = new Date();
 
     await order.save();
+
+    // Restore stock
+    for (const item of order.items) {
+        const product = await Product.findById(item.product);
+        if (product && product.variants) {
+            const variant = product.variants.find(
+                (v) => v.size === item.size && v.color === item.color
+            );
+            if (variant) {
+                variant.stock += item.quantity;
+                await product.save();
+            }
+        }
+    }
 
     return res.status(200).json(
         new ApiResponse(200, order, "Order cancelled successfully")
