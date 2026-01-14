@@ -22,6 +22,7 @@ router.route("/createCatalog").post(
     createCatalog
 );
 router.route("/getAllCatalogsAdmin").get(getAllCatalogsAdmin);
+
 router.route("/updateCatalog/:id").put(
     adminAuth(["admin", "super_admin"]),
     upload.single("image"),

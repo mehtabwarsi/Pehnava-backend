@@ -1,6 +1,8 @@
 // controllers/catalog.controllers.js
 import { Catalog } from "../../models/catalog.model.js";
 import { SubCategory } from "../../models/subCategory.model.js";
+import { Product } from "../../models/product.model.js";
+import { Category } from "../../models/category.model.js";
 import { ApiResponse } from "../../utils/ApiResponse.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
@@ -19,7 +21,7 @@ export const createCatalog = asyncHandler(async (req, res) => {
         subCategory,
         redirectUrl,
         position,
-        badge,
+
     } = req.body;
 
     const imageLocalPath = req.file?.path;
@@ -28,7 +30,7 @@ export const createCatalog = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Image file is required");
     }
 
-    if (!title || !gender || !subCategory || !redirectUrl) {
+    if (!title || !gender || !redirectUrl) {
         throw new ApiError(400, "All required fields must be provided");
     }
 
@@ -38,9 +40,11 @@ export const createCatalog = asyncHandler(async (req, res) => {
         imageUrl = await uploadToCloudinary(imageLocalPath);
     }
 
-    const subCatExists = await SubCategory.findById(subCategory);
-    if (!subCatExists) {
-        throw new ApiError(404, "SubCategory not found");
+    if (subCategory) {
+        const subCatExists = await SubCategory.findById(subCategory);
+        if (!subCatExists) {
+            throw new ApiError(404, "SubCategory not found");
+        }
     }
 
     const catalog = await Catalog.create({
@@ -51,7 +55,7 @@ export const createCatalog = asyncHandler(async (req, res) => {
         image: imageUrl,
         redirectUrl,
         position,
-        badge,
+
         createdBy: req.admin.id,
     });
 
@@ -111,19 +115,58 @@ export const deleteCatalog = asyncHandler(async (req, res) => {
 ===================================================== */
 
 // 🌍 Homepage Catalog
+// 🌍 Homepage Catalog
 export const getActiveCatalogs = asyncHandler(async (req, res) => {
+    // 1. Fetch active catalogs
     const catalogs = await Catalog.find({ isActive: true })
         .populate("subCategory", "name")
-        .sort({ position: 1 });
+        .sort({ position: 1 })
+        .lean(); // Use lean to return plain JS objects
 
+    // 2. Fetch Categories (men, women, unisex) to map IDs
+    const categories = await Category.find({
+        name: { $in: ["men", "women", "unisex"] }
+    }).lean();
+
+    const categoryMap = {};
+    categories.forEach(cat => {
+        categoryMap[cat.name] = cat._id;
+    });
+
+    // 3. Calculate counts for each catalog
+    const catalogsWithCounts = await Promise.all(
+        catalogs.map(async (item) => {
+            const categoryId = categoryMap[item.gender];
+
+            const query = {
+                status: "active",
+                category: categoryId
+            };
+
+            if (item.subCategory?._id) {
+                query.subCategory = item.subCategory._id;
+            }
+
+            const count = await Product.countDocuments(query);
+
+            return {
+                ...item,
+                subtitle: `${count} Items` // Override subtitle
+            };
+        })
+    );
+
+    // 4. Group by gender
     const grouped = {
         men: [],
         women: [],
         unisex: [],
     };
 
-    catalogs.forEach((item) => {
-        grouped[item.gender].push(item);
+    catalogsWithCounts.forEach((item) => {
+        if (grouped[item.gender]) {
+            grouped[item.gender].push(item);
+        }
     });
 
     return res.status(200).json(
