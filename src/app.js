@@ -27,6 +27,7 @@ import addressRoutes from './routes/address.routes.js'
 import cartRoutes from './routes/cart.routes.js'
 import checkoutRoutes from './routes/checkout.routes.js'
 import orderRoutes from './routes/order.routes.js'
+import catalogRoutes from './routes/catalog.routes.js'
 
 // user routes
 app.use('/api/v1/user', userRoutes)
@@ -52,13 +53,8 @@ app.use('/api/v1/checkout', checkoutRoutes)
 // order routes
 app.use('/api/v1/order', orderRoutes)
 
-
-
-
-
-
-
-
+// catalog routes
+app.use('/api/v1/catalog', catalogRoutes)
 
 app.use(errorHandler)
 export { app }
