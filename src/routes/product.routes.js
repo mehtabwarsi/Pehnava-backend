@@ -9,7 +9,8 @@ import {
     addVariant,
     updateProductImages,
     removeProductImage,
-    getProductsByCategoryAndSubCategory
+    getProductsByCategoryAndSubCategory,
+    searchProduct
 } from "../controllers/product.controllers.js";
 import { adminAuth } from "../middleware/adminAuth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -27,6 +28,7 @@ router.route("/:id/remove-product-image").patch(adminAuth(["admin", "super_admin
 
 // filter products
 router.route("/get-all-products").get(getAllProduct);
+router.route("/search").get(searchProduct);
 router.route("/filter").get(getProductsByCategoryAndSubCategory);
 router.route("/:id").get(getProductById);
 

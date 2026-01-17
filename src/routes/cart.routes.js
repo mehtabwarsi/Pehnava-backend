@@ -6,13 +6,15 @@ import {
     getCart,
     updateCartQuantity,
     removeFromCart,
-    clearCart
+    clearCart,
+    getCartCount
 } from "../controllers/cart.controller.js";
 
 const router = Router();
 
 router.post("/add-to-cart", authMiddleware, addToCart);
 router.get("/get-cart", authMiddleware, getCart);
+router.get("/count", authMiddleware, getCartCount);
 
 // 🔥 variant-aware
 router.put("/update-cart-quantity", authMiddleware, updateCartQuantity);

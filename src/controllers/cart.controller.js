@@ -218,10 +218,31 @@ const clearCart = asyncHandler(async (req, res) => {
 });
 
 
+const getCartCount = asyncHandler(async (req, res) => {
+    const firebaseUser = req.firebaseUser;
+
+    const user = await User.findOne({ firebaseUid: firebaseUser.uid });
+    if (!user) throw new ApiError(404, "User not found");
+
+    const cart = await getUserCart(user._id);
+
+    const uniqueItemCount = cart.items.length;
+    const totalQuantity = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            uniqueItemCount,
+            totalQuantity
+        }, "Cart count fetched successfully")
+    );
+});
+
+
 export {
     addToCart,
     getCart,
     updateCartQuantity,
     removeFromCart,
-    clearCart
+    clearCart,
+    getCartCount
 }

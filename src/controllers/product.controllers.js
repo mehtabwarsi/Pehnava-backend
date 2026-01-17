@@ -392,6 +392,49 @@ const getProductsByCategoryAndSubCategory = asyncHandler(async (req, res) => {
 });
 
 
+const searchProduct = asyncHandler(async (req, res) => {
+    const { query, page = 1, limit = 10 } = req.query;
+
+    if (!query) {
+        throw new ApiError(400, "Query parameter is required");
+    }
+
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const searchCriteria = {
+        status: "active",
+        $or: [
+            { name: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } }
+        ]
+    };
+
+    const products = await Product.find(searchCriteria)
+        .select("name description price images category subCategory slug")
+        .populate("category", "name")
+        .populate("subCategory", "name")
+        .skip(skip)
+        .limit(limitNumber);
+
+    const totalDocs = await Product.countDocuments(searchCriteria);
+    const totalPages = Math.ceil(totalDocs / limitNumber);
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            products,
+            pagination: {
+                totalDocs,
+                totalPages,
+                currentPage: pageNumber,
+                limit: limitNumber
+            }
+        }, "Products searched successfully")
+    );
+});
+
+
 export {
     createProduct,
     getAllProduct,
@@ -403,5 +446,6 @@ export {
     updateProductImages,
     removeProductImage,
     getAllCategories,
-    getProductsByCategoryAndSubCategory
+    getProductsByCategoryAndSubCategory,
+    searchProduct
 }
