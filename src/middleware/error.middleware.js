@@ -1,12 +1,22 @@
-const errorHandler = (err, req, res, next) => {
-    const statusCode = err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+import { ApiError } from "../utils/ApiError.js";
 
-    res.status(statusCode).json({
+export const errorHandler = (err, req, res, next) => {
+    let statusCode = err.statusCode || 500;
+    let message = err.message || "Internal Server Error";
+
+    // Mongoose / CastError handling (optional but good)
+    if (err.name === "CastError") {
+        statusCode = 400;
+        message = "Invalid ID format";
+    }
+
+    console.error("ERROR HANDLER CAUGHT:", err);
+
+    return res.status(statusCode).json({
         success: false,
         message,
-        errors: err.errors || []
+        statusCode,
+        errors: err.errors || [],
+        data: null
     });
 };
-
-export { errorHandler };

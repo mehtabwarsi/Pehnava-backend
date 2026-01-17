@@ -1,10 +1,16 @@
 import { app } from "./app.js";
 import connectDB from "./db/mongodb.js";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
+// import model schems
+import "./models/index.js";
+
 
 dotenv.config();
 
 const PORT = process.env.PORT
+
+console.log(`mongoose model name ${mongoose.modelNames()}`)
 
 connectDB()
     .then(() => {
@@ -14,3 +20,5 @@ connectDB()
 
     })
     .catch((err) => console.log("MONGO db connection failed !!!:", err));
+
+// createSuperAdmin();

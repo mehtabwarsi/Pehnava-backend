@@ -44,6 +44,79 @@ const getUserProfile = asyncHandler(async (req, res) => {
     );
 });
 
-export { login, getUserProfile };
+const getTotalUsers = asyncHandler(async (req, res) => {
+    const totalUsers = await User.countDocuments();
+    return res.status(200).json(
+        new ApiResponse(200, totalUsers, "Total users fetched successfully")
+    );
+});
+
+const toggleWishlist = asyncHandler(async (req, res) => {
+    const { productId } = req.body;
+
+    if (!productId) {
+        throw new ApiError(400, "Product ID is required");
+    }
+
+    const firebaseUser = req.firebaseUser;
+
+    const user = await User.findOne({
+        firebaseUid: firebaseUser.uid,
+    });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const alreadyAdded = user.wishList.includes(productId);
+
+    if (alreadyAdded) {
+        user.wishList.pull(productId); // ❌ remove
+    } else {
+        user.wishList.push(productId); // ❤️ add
+    }
+
+    await user.save();
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { action: alreadyAdded ? "removed" : "added" },
+            alreadyAdded
+                ? "Removed from wishlist"
+                : "Added to wishlist"
+        )
+    );
+});
+
+
+const getWishlist = asyncHandler(async (req, res) => {
+    const firebaseUser = req.firebaseUser;
+
+    const user = await User.findOne({
+        firebaseUid: firebaseUser.uid,
+    }).populate("wishList");
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const total = user.wishList.length;
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                items: user.wishList,
+                total,
+            },
+            "Wishlist fetched successfully"
+        )
+    );
+});
+
+
+
+export { login, getUserProfile, getTotalUsers, toggleWishlist, getWishlist };
 
 
