@@ -41,6 +41,11 @@ const productSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        season: {
+            type: String,
+            enum: ["summer", "winter", "monsoon", "spring", "all-season"],
+            default: "all-season",
+        },
 
         description: {
             type: String,
@@ -106,6 +111,7 @@ const productSchema = new mongoose.Schema(
 
 productSchema.index({ category: 1 });
 productSchema.index({ subCategory: 1 });
+productSchema.index({ season: 1 });
 productSchema.index({ name: "text" });
 
 

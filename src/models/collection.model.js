@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 const collectionSchema = new mongoose.Schema(
     {
@@ -14,6 +15,24 @@ const collectionSchema = new mongoose.Schema(
         image: {
             type: String,
             required: true,
+        },
+        slug: {
+            type: String,
+            unique: true,
+            lowercase: true,
+            trim: true,
+        },
+        isDynamic: {
+            type: Boolean,
+            default: false,
+        },
+        filters: {
+            seasons: [String],
+            categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+            subCategories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'SubCategory' }],
+            materials: [String],
+            minPrice: Number,
+            maxPrice: Number,
         },
         redirectUrl: {
             type: String, // e.g., "/shop?gender=men&collection=winter"
@@ -33,8 +52,20 @@ const collectionSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Admin",
         },
+        products: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Product",
+            },
+        ],
     },
     { timestamps: true }
 );
+
+collectionSchema.pre("save", function () {
+    if (this.isModified("title")) {
+        this.slug = slugify(this.title, { lower: true });
+    }
+});
 
 export const Collection = mongoose.model("Collection", collectionSchema);
