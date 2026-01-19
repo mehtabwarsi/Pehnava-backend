@@ -146,6 +146,12 @@ export const getCollectionBySlug = asyncHandler(async (req, res) => {
 // 📦 Get Products for Collection
 export const getCollectionProducts = asyncHandler(async (req, res) => {
     const { slug } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skipValue = (pageNumber - 1) * limitNumber;
+
     const collection = await Collection.findOne({ slug, isActive: true });
 
     if (!collection) {
@@ -162,10 +168,23 @@ export const getCollectionProducts = asyncHandler(async (req, res) => {
         })
             .populate("category", "name")
             .populate("subCategory", "name")
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skipValue)
+            .limit(limitNumber);
     }
 
+    const totalDocs = collection.products?.length || 0;
+    const totalPages = Math.ceil(totalDocs / limitNumber);
+
     return res.status(200).json(
-        new ApiResponse(200, products, "Collection products fetched successfully")
+        new ApiResponse(200, {
+            products,
+            pagination: {
+                totalDocs,
+                totalPages,
+                currentPage: pageNumber,
+                limit: limitNumber
+            }
+        }, "Collection products fetched successfully")
     );
 });

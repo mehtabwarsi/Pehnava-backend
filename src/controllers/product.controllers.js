@@ -83,10 +83,21 @@ const createProduct = asyncHandler(async (req, res) => {
 });
 
 const getAllProduct = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skip = (pageNumber - 1) * limitNumber;
+
     const products = await Product.find()
         .populate("category", "name")
         .populate("subCategory", "name")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber)
         .lean();
+
+    const totalDocs = await Product.countDocuments();
+    const totalPages = Math.ceil(totalDocs / limitNumber);
 
     const productsWithStock = products.map((product) => {
         const totalStock = product.variants?.reduce(
@@ -101,7 +112,15 @@ const getAllProduct = asyncHandler(async (req, res) => {
     });
 
     return res.status(200).json(
-        new ApiResponse(200, productsWithStock.reverse(), "Products fetched successfully")
+        new ApiResponse(200, {
+            products: productsWithStock,
+            pagination: {
+                totalDocs,
+                totalPages,
+                currentPage: pageNumber,
+                limit: limitNumber
+            }
+        }, "Products fetched successfully")
     );
 });
 
@@ -330,7 +349,11 @@ const getAllCategories = asyncHandler(async (req, res) => {
 })
 
 const getProductsByCategoryAndSubCategory = asyncHandler(async (req, res) => {
-    const { category, subCategory, sortByPrice, isFeatured } = req.query;
+    const { category, subCategory, sortByPrice, isFeatured, page = 1, limit = 10 } = req.query;
+
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skipValue = (pageNumber - 1) * limitNumber;
 
     const query = {};
 
@@ -343,7 +366,15 @@ const getProductsByCategoryAndSubCategory = asyncHandler(async (req, res) => {
 
         if (!categoryDoc) {
             return res.status(200).json(
-                new ApiResponse(200, [], "No products found")
+                new ApiResponse(200, {
+                    products: [],
+                    pagination: {
+                        totalDocs: 0,
+                        totalPages: 0,
+                        currentPage: pageNumber,
+                        limit: limitNumber
+                    }
+                }, "No products found")
             );
         }
 
@@ -358,7 +389,15 @@ const getProductsByCategoryAndSubCategory = asyncHandler(async (req, res) => {
 
         if (!subCategoryDoc) {
             return res.status(200).json(
-                new ApiResponse(200, [], "No products found")
+                new ApiResponse(200, {
+                    products: [],
+                    pagination: {
+                        totalDocs: 0,
+                        totalPages: 0,
+                        currentPage: pageNumber,
+                        limit: limitNumber
+                    }
+                }, "No products found")
             );
         }
 
@@ -384,10 +423,23 @@ const getProductsByCategoryAndSubCategory = asyncHandler(async (req, res) => {
     const products = await Product.find(query)
         .populate("category", "name")
         .populate("subCategory", "name")
-        .sort(sortOptions);
+        .sort(sortOptions)
+        .skip(skipValue)
+        .limit(limitNumber);
+
+    const totalDocs = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalDocs / limitNumber);
 
     return res.status(200).json(
-        new ApiResponse(200, products, "Products fetched successfully")
+        new ApiResponse(200, {
+            products,
+            pagination: {
+                totalDocs,
+                totalPages,
+                currentPage: pageNumber,
+                limit: limitNumber
+            }
+        }, "Products fetched successfully")
     );
 });
 
