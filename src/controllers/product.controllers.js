@@ -147,6 +147,22 @@ const getProductById = asyncHandler(async (req, res) => {
     );
 });
 
+const getProductBySlug = asyncHandler(async (req, res) => {
+    const { slug } = req.params;
+
+    const product = await Product.findOne({ slug, status: "active" })
+        .populate("category", "name")
+        .populate("subCategory", "name");
+
+    if (!product) {
+        throw new ApiError(404, "Product not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, product, "Product fetched successfully")
+    );
+});
+
 const updateProduct = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -499,5 +515,6 @@ export {
     removeProductImage,
     getAllCategories,
     getProductsByCategoryAndSubCategory,
-    searchProduct
+    searchProduct,
+    getProductBySlug
 }

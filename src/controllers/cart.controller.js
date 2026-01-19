@@ -95,7 +95,7 @@ const getCart = asyncHandler(async (req, res) => {
     if (!user) throw new ApiError(404, "User not found");
 
     const cart = await getUserCart(user._id);
-    await cart.populate("items.product", "name images variants");
+    await cart.populate("items.product", "name images variants slug");
 
     if (cart.items.length === 0) {
         return res.json(
