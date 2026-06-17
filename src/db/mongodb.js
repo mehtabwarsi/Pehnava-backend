@@ -1,5 +1,13 @@
 import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
+import dns from "dns";
+
+// Set DNS servers to resolve SRV records properly (bypasses ISP/local router DNS restrictions)
+try {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (e) {
+    console.warn("Failed to set custom DNS servers:", e.message);
+}
 
 
 const connectDB = async () => {
