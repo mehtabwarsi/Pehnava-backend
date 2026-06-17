@@ -21,4 +21,6 @@ const connectDB = async () => {
     }
 }
 
+console.log("DB Name:", mongoose.connection.db.databaseName);
+
 export default connectDB
